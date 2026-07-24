@@ -21,7 +21,7 @@ M9833.2
 ;===== start to heat heatbead&hotend==========
 ; Tell the UI this phase is "heating". Set filament type for temp profiles.
 ; M104 S140      — Pre-heat nozzle to 140°C (safe idle temp while moving). NECESSARY.
-; M140 S[...]    — Start heating bed to first-layer target (non-blocking). NECESSARY.
+; M140 S[bed_temperature_initial_layer_single] — Start heating bed to first-layer target (non-blocking). NECESSARY.
 M1002 gcode_claim_action : 2
 M1002 set_filament_type:{filament_type[initial_no_support_extruder]}
 M104 S140
@@ -86,7 +86,7 @@ G1 E-0.5 F30
 M17 D
 
 ; G28 Z P0 T140 — Home Z with low precision; T140 allows homing while nozzle is warm. NECESSARY.
-; M104 S{...}   — Start heating nozzle toward print temp (non-blocking). NECESSARY.
+; M104 S{nozzle_temperature_initial_layer[initial_extruder]} — Start heating nozzle toward print temp (non-blocking). NECESSARY.
 G28 Z P0 T140; home z with low precision,permit 300deg temperature
 M104 S{nozzle_temperature_initial_layer[initial_extruder]}
 
@@ -278,7 +278,7 @@ M109 S{nozzle_temperature_initial_layer[initial_extruder]-50}
 
 G28 Z P0 T300; home z with low precision,permit 300deg temperature
 G29.2 S0 ; turn off ABL
-M104 S140 ; prepare to abl
+M104 S170 ; prepare to abl
 G0 Z5 F20000
 
 ; --- Ooze / spread on exposed steel pad (rear of bed) ---
@@ -384,7 +384,7 @@ G2 I-0.75 J0 X-1.5
 G2 I1 J0 X2
 G2 I-0.75 J0 X-1.5
 
-M109 S140
+M109 S170
 M106 S255 ; turn on fan (G28 has turn off fan)
 
 M211 R; pop softend status
@@ -405,7 +405,7 @@ G1 X0 Y0 F30000               ; Front-left corner before probing.
 G29.2 S1 ; turn on ABL
 
 M190 S[bed_temperature_initial_layer_single]; ensure bed temp
-M109 S140
+M109 S170
 M106 S0 ; turn off fan , too noisy
 
 M622 J1
