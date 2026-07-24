@@ -1,17 +1,35 @@
+;==============================================================================
+; Bambu Lab A1 — Machine Start G-code (annotated)
+;==============================================================================
+; This file runs once at the beginning of every print, before layer 1.
+; Blocks marked NECESSARY should not be removed without understanding the risk.
+; Blocks marked OPTIONAL / COSMETIC can usually be skipped if you accept the tradeoff.
+; Blocks marked CONDITIONAL only matter when a slicer flag or hardware option is enabled.
+;==============================================================================
+
 ;===== machine: A1 =========================
 ;===== date: 20250822 ==================
+
+; --- INIT: sensor / safety flags ---
+; G392 S0        — Disable clog detection during startup (re-enabled later if configured). NECESSARY for startup logic.
+; M9833.2        — Bambu filament encoder / AMS helper init. NECESSARY if using AMS or runout detection.
 G392 S0
 M9833.2
 ;M400
 ;M73 P1.717
 
 ;===== start to heat heatbead&hotend==========
+; Tell the UI this phase is "heating". Set filament type for temp profiles.
+; M104 S140      — Pre-heat nozzle to 140°C (safe idle temp while moving). NECESSARY.
+; M140 S[...]    — Start heating bed to first-layer target (non-blocking). NECESSARY.
 M1002 gcode_claim_action : 2
 M1002 set_filament_type:{filament_type[initial_no_support_extruder]}
 M104 S140
 M140 S[bed_temperature_initial_layer_single]
 
 ;=====start printer sound ===================
+; Startup melody via stepper motors (M1006). Purely cosmetic — OPTIONAL.
+; M17 enables motors, M1006 plays notes, M18 disables after. Safe to remove if you hate the jingle.
 M17
 M400 S1
 M1006 S1
@@ -37,12 +55,20 @@ M18
 ;=====start printer sound ===================
 
 ;=====avoid end stop =================
+; Move Z up 40mm then down 15mm (relative) to un-stick the bed from the endstop
+; before any homing. Prevents false triggers / crash if bed was left near top. NECESSARY.
 G91
 G380 S2 Z40 F1200
 G380 S3 Z-15 F1200
 G90
 
 ;===== reset machine status =================
+; Reset motion limits, motor currents, feed/flow multipliers, and turn on logo light.
+; M204 S6000     — Set default acceleration. RECOMMENDED.
+; M630 S0 P0     — Reset toolhead / extruder mapping. NECESSARY with AMS.
+; M17 Z0.3       — Temporarily lower Z motor current (quieter/safer during early moves). RECOMMENDED.
+; M17 X/Y/Z      — Restore normal motor currents. NECESSARY.
+; M220/M221 S100 — Reset speed and flow overrides to 100%. NECESSARY after prior prints.
 ;M290 X39 Y39 Z8
 M204 S6000
 
@@ -60,19 +86,24 @@ M73.2   R1.0 ;Reset left time magnitude
 ;M211 X0 Y0 Z0 ; turn off soft endstop to prevent protential logic problem
 
 ;====== cog noise reduction=================
+; M982.2 S1 — Reduce extruder gear noise during early moves. OPTIONAL (comfort).
 M982.2 S1 ; turn on cog noise reduction
 
+; --- EARLY HOMING & POSITIONING ---
+; UI phase: "homing". Home X, lift Z, move to rear-center purge area, lower Z.
 M1002 gcode_claim_action : 13
 
-G28 X
+G28 X                          ; Home X axis only. NECESSARY.
 G91
-G1 Z5 F1200
+G1 Z5 F1200                    ; Lift Z 5mm (relative). NECESSARY clearance.
 G90
-G0 X128 F30000
-G0 Y254 F3000
+G0 X128 F30000                 ; Fast move to X center (~128mm on A1).
+G0 Y254 F3000                  ; Move to rear Y (near back of bed / purge zone).
 G91
-G1 Z-5 F1200
+G1 Z-5 F1200                   ; Lower Z 5mm back down.
 
+; M109 S25 H140  — Wait for nozzle ≤140°C (H140 = max temp while waiting). NECESSARY before cold extrude.
+; G1 E10 / E-0.5 — Small prime then slight retract to pressurize hotend. RECOMMENDED (reduces ooze later).
 M109 S25 H140
 
 M17 E0.3
@@ -81,9 +112,13 @@ G1 E10 F1200
 G1 E-0.5 F30
 M17 D
 
+; G28 Z P0 T140 — Home Z with low precision; T140 allows homing while nozzle is warm. NECESSARY.
+; M104 S{...}   — Start heating nozzle toward print temp (non-blocking). NECESSARY.
 G28 Z P0 T140; home z with low precision,permit 300deg temperature
 M104 S{nozzle_temperature_initial_layer[initial_extruder]}
 
+; --- BUILD PLATE DETECTION (optional hardware feature) ---
+; If build_plate_detect_flag is set, run G39.4 to verify plate is present. CONDITIONAL.
 M1002 judge_flag build_plate_detect_flag
 M622 S1
   G39.4
@@ -95,6 +130,8 @@ M623
 ;M73 P1.717
 
 ;===== prepare print temperature and material ==========
+; Move to left-side purge bucket (X ≈ -48mm off bed), heat nozzle, load/flush filament.
+; This entire section is NECESSARY for AMS multi-material; still RECOMMENDED without AMS (purge old filament).
 M1002 gcode_claim_action : 24
 
 M400
@@ -103,9 +140,14 @@ M211 X0 Y0 Z0 ;turn off soft endstop
 M975 S1 ; turn on
 
 G90
-G1 X-28.5 F30000
-G1 X-48.2 F3000
+G1 X-28.5 F30000               ; Approach purge area quickly.
+G1 X-48.2 F3000                ; Slow final move into purge position (left of bed).
 
+; --- AMS MATERIAL SWITCH & FLUSH (inside M620 block) ---
+; M620/M621     — Bambu AMS: select filament slot, remap extruder. NECESSARY with AMS.
+; M109/M104     — Heat to flush temps (250°C common flush). NECESSARY for color/material changes.
+; T[n]          — Tool change to initial extruder. NECESSARY with AMS.
+; G1 E50        — Purge 50mm to clear previous filament from nozzle. NECESSARY on material change.
 M620 M ;enable remap
 M620 S[initial_no_support_extruder]A   ; switch material if AMS exist
     M1002 gcode_claim_action : 4
@@ -127,6 +169,9 @@ M620 S[initial_no_support_extruder]A   ; switch material if AMS exist
     M1002 set_filament_type:{filament_type[initial_no_support_extruder]}
 M621 S[initial_no_support_extruder]A
 
+; --- POST-AMS PURGE & WIPE SHAKE ---
+; More purge at filament-specific flush temp, then hotend fan, final retract.
+; X-28.5 ↔ X-48.2 repeated moves = "wipe and shake" to flick molten plastic off nozzle. RECOMMENDED.
 M109 S{flush_temperatures[initial_no_support_extruder]} H300
 G92 E0
 G1 E50 F200 ; lower extrusion speed to avoid clog
@@ -155,13 +200,15 @@ M106 P1 S0
 ;M73 P1.717
 
 ;===== auto extrude cali start =========================
+; Dynamic extrusion (flow) calibration at purge station — measures pressure advance.
+; CONDITIONAL: runs only if extrude_cali_flag is enabled in slicer. Safe to disable in slicer to save time.
 M975 S1
 ;G392 S1
 
 G90
 M83
 T1000
-G1 X-48.2 Y0 Z10 F10000
+G1 X-48.2 Y0 Z10 F10000        ; Position at purge station, Z lifted.
 M400
 M1002 set_filament_type:UNKNOWN
 
@@ -228,28 +275,32 @@ M623 ; end of "draw extrinsic para cali paint"
 ;M400
 ;M73 P1.717
 
+; Lower nozzle to 170°C and spin part cooling fan before mechanical checks / wipe.
 M104 S170 ; prepare to wipe nozzle
 M106 S255 ; turn on fan
 
 ;===== mech mode fast check start =====================
+; Vibration / resonance self-test (M970.x). Identifies mechanical issues before print.
+; Moves to bed center, runs quick resonance sweep on X and Y, then re-homes X.
+; OPTIONAL in slicer sense — but RECOMMENDED for quality; skip only if you know your machine is dialed in.
 M1002 gcode_claim_action : 3
 
-G1 X128 Y128 F20000
+G1 X128 Y128 F20000            ; Bed center.
 G1 Z5 F1200
 M400 P200
-M970.3 Q1 A5 K0 O3
+M970.3 Q1 A5 K0 O3             ; Configure Y-axis resonance test.
 M974 Q1 S2 P0
 
-M970.2 Q1 K1 W58 Z0.1
+M970.2 Q1 K1 W58 Z0.1          ; Run Y resonance test, 58mm sweep.
 M974 S2
 
 G1 X128 Y128 F20000
 G1 Z5 F1200
 M400 P200
-M970.3 Q0 A10 K0 O1
+M970.3 Q0 A10 K0 O1            ; Configure X-axis resonance test.
 M974 Q0 S2 P0
 
-M970.2 Q0 K1 W78 Z0.1
+M970.2 Q0 K1 W78 Z0.1          ; Run X resonance test, 78mm sweep.
 M974 S2
 
 M975 S1
@@ -265,6 +316,8 @@ G1 Z4 F1200
 ;M73 P1.717
 
 ;===== wipe nozzle ===============================
+; Full nozzle cleaning routine: touch-wipe on bed front, oozing on steel pad, brush wipe, second ooze.
+; NECESSARY for clean first layer — do not remove unless you have an alternative wipe strategy.
 M1002 gcode_claim_action : 14
 
 M975 S1
@@ -273,7 +326,8 @@ M211 S; push soft endstop status
 M211 X0 Y0 Z0 ;turn off Z axis endstop
 
 ;===== remove waste by touching start =====
-
+; "Touch wipe": nozzle taps the bed front edge (Y≈-0.5) while moving X 108→148.
+; Each stop: G380 S3 Z-5 taps down, G1 Z2 lifts. Scrapes blob off on PEI. NECESSARY for blob removal.
 M104 S170 ; set temp down to heatbed acceptable
 
 M83
@@ -348,6 +402,7 @@ G380 S3 Z-5 F1200
 G1 Z5 F30000
 ;===== remove waste by touching end =====
 
+; Move to rear-right steel wiping pad (X118 Y261), cool slightly, re-home Z.
 G1 Z10 F1200
 G0 X118 Y261 F30000
 G1 Z5 F1200
@@ -358,6 +413,8 @@ G29.2 S0 ; turn off ABL
 M104 S140 ; prepare to abl
 G0 Z5 F20000
 
+; --- Ooze / spread on exposed steel pad (rear of bed) ---
+; Nozzle presses into steel (Z-1.01), then G2 arcs spread leftover filament in circles. RECOMMENDED.
 G0 X128 Y261 F20000  ; move to exposed steel surface
 G0 Z-1.01 F1200      ; stop the nozzle
 
@@ -387,6 +444,8 @@ G90
 G1 Z10 F1200
 
 ;===== brush material wipe nozzle =====
+; Physical chute brush at rear-right: two passes (X55 and X30 sides) scrub nozzle exterior.
+; NECESSARY on A1 — this is the main mechanical nozzle cleaner.
 
 G90
 G1 Y250 F30000
@@ -394,7 +453,7 @@ G1 X55
 G1 Z1.300 F1200
 G1 Y262.5 F6000
 G91
-G1 X-35 F30000
+G1 X-35 F30000                 ; Fast brush pass through chute.
 G1 Y-0.5
 G1 X45
 G1 Y-0.5
@@ -408,7 +467,7 @@ G1 X45
 G1 Z5.000 F1200
 
 G90
-G1 X30 Y250.000 F30000
+G1 X30 Y250.000 F30000         ; Second brush pass from opposite side.
 G1 Z1.300 F1200
 G1 Y262.5 F6000
 G91
@@ -427,6 +486,7 @@ G1 Z10.000 F1200
 
 ;===== brush material wipe nozzle end =====
 
+; Second steel-pad ooze cycle at X138 Y261 (mirror of first). Cleans after brushing. RECOMMENDED.
 G90
 ;G0 X128 Y261 F20000  ; move to exposed steel surface
 G1 Y250 F30000
@@ -467,11 +527,13 @@ M211 R; pop softend status
 ;M73 P1.717
 
 ;===== bed leveling ==================================
+; Automatic bed leveling (G29) over the print area. CONDITIONAL on g29_before_print_flag.
+; If enabled: NECESSARY for good first layer on uneven beds. M500 saves mesh to EEPROM.
 M1002 judge_flag g29_before_print_flag
 
 G90
 G1 Z5 F1200
-G1 X0 Y0 F30000
+G1 X0 Y0 F30000               ; Front-left corner before probing.
 G29.2 S1 ; turn on ABL
 
 M190 S[bed_temperature_initial_layer_single]; ensure bed temp
@@ -487,6 +549,8 @@ M623
 ;===== bed leveling end ================================
 
 ;===== home after wipe mouth============================
+; If G29 did NOT run (flag=0), full G28 homing restores Z reference after wipe moves disturbed it.
+; CONDITIONAL — only runs when bed leveling before print is disabled. NECESSARY in that case.
 M1002 judge_flag g29_before_print_flag
 M622 J0
 
@@ -500,6 +564,8 @@ M623
 ;M400
 ;M73 P1.717
 
+; --- Nozzle height fine check at front-left ---
+; G2814 — Bambu nozzle-to-bed distance verification/correction. RECOMMENDED.
 G1 X108.000 Y-0.500 F30000
 G1 Z0.300 F1200
 M400
@@ -508,6 +574,8 @@ G2814 Z0.32
 M104 S{nozzle_temperature_initial_layer[initial_extruder]} ; prepare to print
 
 ;===== nozzle load line ===============================
+; Classic priming line along front edge — currently DISABLED (commented out).
+; OPTIONAL — many profiles skip this because purge tower / cali lines handle priming.
 ;G90
 ;M83
 ;G1 Z5 F1200
@@ -522,6 +590,8 @@ M104 S{nozzle_temperature_initial_layer[initial_extruder]} ; prepare to print
 ;===== nozzle load line end ===========================
 
 ;===== extrude cali test ===============================
+; Draws calibration pattern at front of bed (M900 flow calibration lines).
+; First block always runs; second block duplicates if extrude_cali_flag is on. CONDITIONAL / RECOMMENDED.
 
 M400
     M900 S
@@ -567,16 +637,17 @@ M622 J1
     M400
 M623
 
-G1 Z0.2
+G1 Z0.2                         ; Final Z hop before print start.
 
 ;M400
 ;M73 P1.717
 
 ;========turn off light and wait extrude temperature =============
+; Hand off to print: UI idle, plate-specific Z offset, fans/lights off, enable sensors.
 M1002 gcode_claim_action : 0
 M400
 
-;===== for Textured PEI Plate , lower the nozzle as the nozzle was touching topmost of the texture when homing ==
+; Textured PEI needs -0.02mm Z tweak because homing touches texture peaks. CONDITIONAL on plate type.
 ;curr_bed_type={curr_bed_type}
 {if curr_bed_type=="Textured PEI Plate"}
 G29.1 Z{-0.02} ; for Textured PEI Plate
@@ -596,4 +667,4 @@ T1000
 M211 X0 Y0 Z0 ;turn off soft endstop
 ;G392 S1 ; turn on clog detection
 M1007 S1 ; turn on mass estimation
-G29.4
+G29.4                           ; Apply bed mesh / flow ratio — NECESSARY before first layer.
