@@ -31,8 +31,8 @@ M140 S[bed_temperature_initial_layer_single]
 ; Move Z up 40mm then down 15mm (relative) to un-stick the bed from the endstop
 ; before any homing. Prevents false triggers / crash if bed was left near top. NECESSARY.
 G91
-G380 S2 Z40 F1200
-G380 S3 Z-15 F1200
+G380 S2 Z10 F1200
+G380 S3 Z-5 F1200
 G90
 
 ;===== reset machine status =================
