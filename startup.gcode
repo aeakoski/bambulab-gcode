@@ -182,41 +182,6 @@ M623 ; end of "draw extrinsic para cali paint"
 M104 S170 ; prepare to wipe nozzle
 M106 S255 ; turn on fan
 
-;===== mech mode fast check start =====================
-; Vibration / resonance self-test (M970.x). Identifies mechanical issues before print.
-; Moves to bed center, runs quick resonance sweep on X and Y, then re-homes X.
-; OPTIONAL in slicer sense — but RECOMMENDED for quality; skip only if you know your machine is dialed in.
-M1002 gcode_claim_action : 3
-
-G1 X128 Y128 F20000            ; Bed center.
-G1 Z5 F1200
-M400 P200
-M970.3 Q1 A5 K0 O3             ; Configure Y-axis resonance test.
-M974 Q1 S2 P0
-
-M970.2 Q1 K1 W58 Z0.1          ; Run Y resonance test, 58mm sweep.
-M974 S2
-
-G1 X128 Y128 F20000
-G1 Z5 F1200
-M400 P200
-M970.3 Q0 A10 K0 O1            ; Configure X-axis resonance test.
-M974 Q0 S2 P0
-
-M970.2 Q0 K1 W78 Z0.1          ; Run X resonance test, 78mm sweep.
-M974 S2
-
-M975 S1
-G1 F30000
-G1 X0 Y5
-G28 X ; re-home XY
-
-G1 Z4 F1200
-
-;===== mech mode fast check end =======================
-
-;M400
-;M73 P1.717
 
 ;===== wipe nozzle ===============================
 ; Full nozzle cleaning routine: touch-wipe on bed front, oozing on steel pad, brush wipe, second ooze.
