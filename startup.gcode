@@ -353,35 +353,6 @@ G1 Z10.000 F1200
 
 ;===== brush material wipe nozzle end =====
 
-; Second steel-pad ooze cycle at X138 Y261 (mirror of first). Cleans after brushing. RECOMMENDED.
-G90
-;G0 X128 Y261 F20000  ; move to exposed steel surface
-G1 Y250 F30000
-G1 X138
-G1 Y261
-G0 Z-1.01 F1200      ; stop the nozzle
-
-G91
-G2 I1 J0 X2 Y0 F2000.1
-G2 I-0.75 J0 X-1.5
-G2 I1 J0 X2
-G2 I-0.75 J0 X-1.5
-G2 I1 J0 X2
-G2 I-0.75 J0 X-1.5
-G2 I1 J0 X2
-G2 I-0.75 J0 X-1.5
-G2 I1 J0 X2
-G2 I-0.75 J0 X-1.5
-G2 I1 J0 X2
-G2 I-0.75 J0 X-1.5
-G2 I1 J0 X2
-G2 I-0.75 J0 X-1.5
-G2 I1 J0 X2
-G2 I-0.75 J0 X-1.5
-G2 I1 J0 X2
-G2 I-0.75 J0 X-1.5
-G2 I1 J0 X2
-G2 I-0.75 J0 X-1.5
 
 M109 S170
 M106 S255 ; turn on fan (G28 has turn off fan)
