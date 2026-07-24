@@ -20,11 +20,11 @@ M9833.2
 
 ;===== start to heat heatbead&hotend==========
 ; Tell the UI this phase is "heating". Set filament type for temp profiles.
-; M104 S140      — Pre-heat nozzle to 140°C (safe idle temp while moving). NECESSARY.
+; M104 S170      — Pre-heat nozzle to 170°C (safe idle temp while moving). NECESSARY.
 ; M140 S[bed_temperature_initial_layer_single] — Start heating bed to first-layer target (non-blocking). NECESSARY.
 M1002 gcode_claim_action : 2
 M1002 set_filament_type:{filament_type[initial_no_support_extruder]}
-M104 S140
+M104 S170
 M140 S[bed_temperature_initial_layer_single]
 
 ;=====avoid end stop =================
@@ -75,9 +75,9 @@ G0 Y254 F3000                  ; Move to rear Y (near back of bed / purge zone).
 G91
 G1 Z-5 F1200                   ; Lower Z 5mm back down.
 
-; M109 S25 H140  — Wait for nozzle ≤140°C (H140 = max temp while waiting). NECESSARY before cold extrude.
+; M109 S25 H170  — Wait for nozzle ≤170°C (H170 = max temp while waiting). NECESSARY before cold extrude.
 ; G1 E10 / E-0.5 — Small prime then slight retract to pressurize hotend. RECOMMENDED (reduces ooze later).
-M109 S25 H140
+M109 S25 H170
 
 M17 E0.3
 M83
@@ -85,9 +85,9 @@ G1 E10 F1200
 G1 E-0.5 F30
 M17 D
 
-; G28 Z P0 T140 — Home Z with low precision; T140 allows homing while nozzle is warm. NECESSARY.
+; G28 Z P0 T170 — Home Z with low precision; T170 allows homing while nozzle is warm. NECESSARY.
 ; M104 S{nozzle_temperature_initial_layer[initial_extruder]} — Start heating nozzle toward print temp (non-blocking). NECESSARY.
-G28 Z P0 T140; home z with low precision,permit 300deg temperature
+G28 Z P0 T170; home z with low precision,permit 300deg temperature
 M104 S{nozzle_temperature_initial_layer[initial_extruder]}
 
 ; --- BUILD PLATE DETECTION (optional hardware feature) ---
