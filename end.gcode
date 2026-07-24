@@ -97,8 +97,8 @@ M400 ; wait all motion done
 M17 S
 M17 Z0.4 ; lower z motor current to reduce impact if there is something in the bottom
 {if (max_layer_z + 100.0) < 256}
-    G1 Z{max_layer_z + 100.0} F600
-    G1 Z{max_layer_z +98.0}
+    G1 Z{max_layer_z + 10.0} F600
+    G1 Z{max_layer_z + 8.0}
 {else}
     G1 Z256 F600
     G1 Z256
@@ -113,30 +113,6 @@ M220 S100  ; Reset feedrate magnitude
 M201.2 K1.0 ; Reset acc magnitude
 M73.2   R1.0 ;Reset left time magnitude
 M1002 set_gcode_claim_speed_level : 0
-
-;=====printer finish  sound=========
-M17
-M400 S1
-M1006 S1
-M1006 A0 B20 L100 C37 D20 M40 E42 F20 N60
-M1006 A0 B10 L100 C44 D10 M60 E44 F10 N60
-M1006 A0 B10 L100 C46 D10 M80 E46 F10 N80
-M1006 A44 B20 L100 C39 D20 M60 E48 F20 N60
-M1006 A0 B10 L100 C44 D10 M60 E44 F10 N60
-M1006 A0 B10 L100 C0 D10 M60 E0 F10 N60
-M1006 A0 B10 L100 C39 D10 M60 E39 F10 N60
-M1006 A0 B10 L100 C0 D10 M60 E0 F10 N60
-M1006 A0 B10 L100 C44 D10 M60 E44 F10 N60
-M1006 A0 B10 L100 C0 D10 M60 E0 F10 N60
-M1006 A0 B10 L100 C39 D10 M60 E39 F10 N60
-M1006 A0 B10 L100 C0 D10 M60 E0 F10 N60
-M1006 A0 B10 L100 C48 D10 M60 E44 F10 N80
-M1006 A0 B10 L100 C0 D10 M60 E0 F10  N80
-M1006 A44 B20 L100 C49 D20 M80 E41 F20 N80
-M1006 A0 B20 L100 C0 D20 M60 E0 F20 N80
-M1006 A0 B20 L100 C37 D20 M30 E37 F20 N60
-M1006 W
-;=====printer finish  sound=========
 
 ;M17 X0.8 Y0.8 Z0.5 ; lower motor current to 45% power
 M400
