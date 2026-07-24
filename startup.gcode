@@ -27,33 +27,6 @@ M1002 set_filament_type:{filament_type[initial_no_support_extruder]}
 M104 S140
 M140 S[bed_temperature_initial_layer_single]
 
-;=====start printer sound ===================
-; Startup melody via stepper motors (M1006). Purely cosmetic — OPTIONAL.
-; M17 enables motors, M1006 plays notes, M18 disables after. Safe to remove if you hate the jingle.
-M17
-M400 S1
-M1006 S1
-M1006 A0 B10 L100 C37 D10 M60 E37 F10 N60
-M1006 A0 B10 L100 C41 D10 M60 E41 F10 N60
-M1006 A0 B10 L100 C44 D10 M60 E44 F10 N60
-M1006 A0 B10 L100 C0 D10 M60 E0 F10 N60
-M1006 A43 B10 L100 C46 D10 M70 E39 F10 N80
-M1006 A0 B10 L100 C0 D10 M60 E0 F10 N80
-M1006 A0 B10 L100 C43 D10 M60 E39 F10 N80
-M1006 A0 B10 L100 C0 D10 M60 E0 F10 N80
-M1006 A0 B10 L100 C41 D10 M80 E41 F10 N80
-M1006 A0 B10 L100 C44 D10 M80 E44 F10 N80
-M1006 A0 B10 L100 C49 D10 M80 E49 F10 N80
-M1006 A0 B10 L100 C0 D10 M80 E0 F10 N80
-M1006 A44 B10 L100 C48 D10 M60 E39 F10 N80
-M1006 A0 B10 L100 C0 D10 M60 E0 F10 N80
-M1006 A0 B10 L100 C44 D10 M80 E39 F10 N80
-M1006 A0 B10 L100 C0 D10 M60 E0 F10 N80
-M1006 A43 B10 L100 C46 D10 M60 E39 F10 N80
-M1006 W
-M18 
-;=====start printer sound ===================
-
 ;=====avoid end stop =================
 ; Move Z up 40mm then down 15mm (relative) to un-stick the bed from the endstop
 ; before any homing. Prevents false triggers / crash if bed was left near top. NECESSARY.
