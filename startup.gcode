@@ -274,7 +274,6 @@ G1 Z5 F30000
 G1 Z10 F1200
 G0 X118 Y261 F30000
 G1 Z5 F1200
-M109 S{nozzle_temperature_initial_layer[initial_extruder]-50}
 
 G28 Z P0 T300; home z with low precision,permit 300deg temperature
 G29.2 S0 ; turn off ABL
